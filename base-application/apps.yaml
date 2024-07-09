@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ''
+spec:
+  destination:
+    name: ''
+    namespace: ''
+    server: ''
+  source:
+    path: ''
+    repoURL: 'https://github.com/ChukwuemekaAham/base-application.git'
+    targetRevision: HEAD
+  sources: []
+  project: ''

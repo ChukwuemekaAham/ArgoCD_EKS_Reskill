@@ -1,0 +1,41 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: reskillCluster
+  region: us-east-2
+  version: "1.24"
+  tags:
+    karpenter.sh/discovery: reskillCluster
+    created-by: chukwuemeka
+    env: reskillCluster
+
+managedNodeGroups:
+- name: reskill-ng
+  instanceType: m5.large
+  minSize: 3
+  maxSize: 10
+  desiredCapacity: 3
+  privateNetworking: true
+  labels:
+    karpenter.sh/discovery: reskillCluster
+  iam:
+    withAddonPolicies:
+      autoScaler: true
+      cloudWatch: true
+      ebs: true
+      fsx: true
+      efs: true
+      imageBuilder: true
+      certManager: true
+      appMesh: true
+      xRay: true
+      cloudWatch: true
+
+addons:
+- name: vpc-cni
+- name: coredns
+- name: kube-proxy
+
+iam:
+  withOIDC: true
