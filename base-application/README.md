@@ -1,8 +1,5 @@
 # Automation with GitOps (ArgoCD)
 
-In this chapter, we'll look at several technologies that can be used with EKS to automate parts of the software delivery lifecycle, including deploying code and provisioning infrastructure like RDS databases and Elasticache clusters.
-
-
 # GitOps
 Companies want to go fast; they need to deploy more often, more reliably, and preferably with less overhead. GitOps is a fast and secure method for developers to manage and update complex applications and infrastructure running in Kubernetes.
 
@@ -12,39 +9,18 @@ What is GitOps? Coined by Weaveworks CEO, Alexis Richardson, GitOps is an operat
 
 
 # Argo CD
-BEFORE YOU START
-Prepare your environment for this section:
 
 Argo CD is a declarative, GitOps continuous delivery tool for Kubernetes. Argo CD controller in Kubernetes cluster continuously monitors the state of your cluster and compares it with the desired state defined in Git. If the cluster state does not match the desired state, Argo CD reports the deviation and provides visualizations to help developers manually or automatically sync the cluster state with the desired state.
 
-Argo CD offers 3 ways to manage your application state:
+**Argo CD offers 3 ways to manage your application state:**
 
-CLI - A powerful CLI that lets you create YAML resource definitions for your applications and sync them with your cluster.
-User Interface - A web-based UI that lets you do the same things that you can do with the CLI. It also lets you visualize the Kubernetes resources belongs to the Argo CD applications that you create.
+- CLI - A powerful CLI that lets you create YAML resource definitions for your applications and sync them with your cluster.
+
+- User Interface - A web-based UI that lets you do the same things that you can do with the CLI. It also lets you visualize the Kubernetes resources belongs to the Argo CD applications that you create.
 Kubernetes manifests and Helm charts applied to the cluster.
 
-argo-cd-architecture
 
-
-## Accessing AWS CodeCommit
-As AWS CodeCommit repository has been created in our lab environment, but we'll need to complete some steps before Cloud9 can connect to it.
-
-We can add the SSH keys for CodeCommit to the known hosts file to prevent warnings later on:
-
-~
-$
-ssh-keyscan -H git-codecommit.${AWS_REGION}.amazonaws.com &> ~/.ssh/known_hosts
-
-And we can set up an identity that Git will use for our commits:
-
-~
-$
-git config --global user.email "you@eksworkshop.com"
-~
-$
-git config --global user.name "Your Name"
-
-
+![argo-cd-architecture](https://github.com/ChukwuemekaAham/ArgoCD_EKS_Reskill/blob/main/base-application/argo-cd-architecture-58970cbaf9bfe2758e77c3739c218ad0.png)
 
 # Installing Argo CD
 First lets install Argo CD in our cluster:
@@ -65,25 +41,25 @@ STATUS: deployed
 REVISION: 1
 TEST SUITE: None
 NOTES:
-In order to access the server UI you have the following options:      
+
+# In order to access the server UI you have the following options:      
 
 1. kubectl port-forward service/argocd-server -n argocd 8080:443      
-
     and then open the browser on http://localhost:8080 and accept the certificate
 
 2. enable ingress in the values file `server.ingress.enabled` and either
-      - Add the annotation for ssl passthrough: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough  
-      - Set the `configs.params."server.insecure"` in the values file and terminate SSL at your ingress: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-2-multiple-ingress-objects-and-hosts
+    - Add the annotation for ssl passthrough: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough  
+
+    - Set the `configs.params."server.insecure"` in the values file and terminate SSL at your ingress: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-2-multiple-ingress-objects-and-hosts
 
 
-After reaching the UI the first time you can login with username: admin and the random password generated during the installation. You can find the password by running:
+# After reaching the UI the first time you can login with username: admin and the random password generated during the installation. You can find the password by running:
 
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
 (You should delete the initial secret afterwards as suggested by the Getting Started Guide: https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli)
 
 #the Argo CD server UI has been exposed outside of the cluster using Kubernetes Service of Load Balancer type. To get the URL from Argo CD service run the following command:
-
 
 export ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname')
 
@@ -92,7 +68,6 @@ echo "ArgoCD URL: https://$ARGOCD_SERVER"
 ArgoCD URL: https://adcd79e527dee469886b5ea62e290d2d-1300424303.us-east-2.elb.amazonaws.com
 
 #The load balancer will take some time to provision so use this command to wait until ArgoCD responds:
-
 
 curl --head -X GET --retry 20 --retry-all-errors --retry-delay 15 \
   --connect-timeout 5 --max-time 10 -k \
@@ -121,7 +96,6 @@ ArgoCD admin password: Nb4arW9Ew2ld8h8M
 argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PWD --insecure
 'admin:login' logged in successfully
 Context 'adcd79e527dee469886b5ea62e290d2d-1300424303.us-east-2.elb.amazonaws.com' updated
-
 
 
 
@@ -291,15 +265,12 @@ $ yq -i '.spec.replicas = 3' ./base-application/apps/deployment.yaml
 
 Push changes to the Git repository
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application add .
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application commit -am "Update UI service replicas"
 [main bd644bf] Update UI service replicas
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application push
 Enumerating objects: 7, done.
 Counting objects: 100% (7/7), done.
@@ -361,8 +332,7 @@ ui-fddcf8d7b-sv5hf   1/1     Running   0
 97s
 
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
-$ kubectl apply -k ./eks-workshop-v2-main/eks-workshop-v2-main/manifests/modules/exposing/load-balancer/nlb
+$ kubectl apply -k ./exposing/load-balancer/nlb
 service/ui-nlb created
 
 
@@ -416,42 +386,21 @@ $ argocd app delete apps --cascade -y
 
 # values.yaml also contains values which are specific for a particular environment and which will be applied to all application templates.
 
-cd ./eks-workshop-v2-main/eks-workshop-v2-main/manifests/modules/automation/gitops/argocd/app-of-apps/values.yaml
-spec:
-  destination:
-    server: https://kubernetes.default.svc
-  source:
-    repoURL: ${GITOPS_REPO_URL_ARGOCD}
-    targetRevision: main
-
-applications:
-  - name: assets
-  - name: carts
-  - name: catalog
-  - name: checkout
-  - name: orders
-  - name: other
-  - name: rabbitmq
-  - name: ui
-
-
 # First, copy App of Apps configuration which we described above to the Git repository directory:
 
-$ cp -R ./eks-workshop-v2-main/eks-workshop-v2-main/manifests/modules/automation/gitops/argocd/app-of-apps ./base-application/
+$ cp -R ./automation/gitops/argocd/app-of-apps ./base-application/
 
-$ yq -i ".spec.source.repoURL = env(GITOPS_REPO_URL_ARGOCD)" ~/environment/argocd/app-of-apps/values.yaml
+$ yq -i ".spec.source.repoURL = env(GITOPS_REPO_URL_ARGOCD)" ./base-application/app-of-apps/values.yaml
 
 # Next, push changes to the Git repository:
 
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application add .
 warning: in the working copy of 'app-of-apps/Chart.yaml', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'app-of-apps/templates/_application.yaml', LF will be replaced by CRLF the next time Git touches it       
 warning: in the working copy of 'app-of-apps/templates/application.yaml', LF will be replaced by CRLF the next time Git touches it        
 warning: in the working copy of 'app-of-apps/values.yaml', LF will be replaced by CRLF the next time Git touches it
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application commit -am "Adding App of Apps"
 [main efdca81] Adding App of Apps
  4 files changed, 52 insertions(+)
@@ -460,7 +409,6 @@ $ git -C ./base-application commit -am "Adding App of Apps"
  create mode 100644 app-of-apps/templates/application.yaml
  create mode 100644 app-of-apps/values.yaml
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application push
 Enumerating objects: 9, done.
 Counting objects: 100% (9/9), done.
@@ -537,7 +485,6 @@ argoproj.io  Application  argocd     ui        Synced                application
 argoproj.io  Application  argocd     checkout  Synced                application.argoproj.io/checkout unchanged
 argoproj.io  Application  argocd     catalog   Synced                application.argoproj.io/catalog unchanged
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 
 # We have Argo CD App of Apps Application deployed and synced.
 
@@ -556,7 +503,7 @@ argocd-ui-apps.png
 
 ~
 $
-kubectl delete -k ./eks-workshop-v2-main/eks-workshop-v2-main/manifests/base-application --ignore-not-found=true
+kubectl delete -k ./base-application --ignore-not-found=true
 namespace "assets" deleted
 namespace "carts" deleted
 namespace "catalog" deleted
@@ -590,7 +537,7 @@ We will then need to create a customization for each application:
         |-- deployment-patch.yaml
         `-- kustomization.yaml
 
-~/environment/eks-workshop/modules/automation/gitops/argocd/apps-kustomization/ui/kustomization.yaml
+./base-application/apps-kustomization/ui/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
@@ -602,7 +549,7 @@ patches:
 
 # We define a path to base Kubernetes manifests for an application, in this case ui, using resources. We also define which configuration should be applied to ui application in EKS cluster using patches.
 
-~/environment/eks-workshop/modules/automation/gitops/argocd/apps-kustomization/ui/deployment-patch.yaml
+./base-application/apps-kustomization/ui/deployment-patch.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -615,11 +562,7 @@ spec:
 
 # Copy files to the Git repository directory:
 
-
-$
-cp -R ~/environment/eks-workshop/modules/automation/gitops/argocd/apps-kustomization ./base-application/
-
-# final Git directory should now look like this. You can validate it by running tree ~/environment/argocd:
+# final Git directory should now look like this. You can validate it by running tree ./base-application:
 
 |-- app-of-apps
 |   |-- Chart.yaml
@@ -652,24 +595,18 @@ cp -R ~/environment/eks-workshop/modules/automation/gitops/argocd/apps-kustomiza
 
 Push changes to the Git repository:
 
-~
-$
-git -C ./base-application add .
-~
-$
-git -C ./base-application commit -am "Adding apps kustomization"
-~
-$
-git -C ./base-application push
+$ git -C ./base-application add .
+
+$ git -C ./base-application commit -am "Adding apps kustomization"
+
+$ git -C ./base-application push
 
 Click Refresh and Sync in ArgoCD UI, use argocd CLI to Sync the application or wait until automatic Sync will be finished:
 
 
-$
-argocd app sync apps
+$ argocd app sync apps
 
-$
-argocd app sync ui
+$ argocd app sync ui
 
 $ argocd app sync apps
 
@@ -702,7 +639,6 @@ argoproj.io  Application  argocd     rabbitmq  Synced                application
 argoproj.io  Application  argocd     catalog   Synced                application.argoproj.io/catalog unchanged
 argoproj.io  Application  argocd     other     Synced                application.argoproj.io/other unchanged
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ argocd app sync ui
 
 Name:               argocd/ui
@@ -743,12 +679,10 @@ argocd-ui-apps.png
 # You should also have all the resources related to the ui application deployed. To verify, run the following commands:
 
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ kubectl get deployment -n ui ui
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 ui     1/1     1            1           6m12s
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ kubectl get pod -n ui
 NAME                 READY   STATUS    RESTARTS   AGE
 ui-fddcf8d7b-pfdgm   1/1     Running   0          9m16s
@@ -760,8 +694,7 @@ Now we can use Argo CD and Kustomize to deploy patches to our application manife
 # You can execute commands to add necessary changes to the file apps-kustomization/ui/deployment-patch.yaml:
 
 
-$
-yq -i '.spec.replicas = 3' ~/environment/argocd/apps-kustomization/ui/deployment-patch.yaml
+$ yq -i '.spec.replicas = 3' ./base-application/apps-kustomization/ui/deployment-patch.yaml
 
 # You can review planned changes in the file apps-kustomization/ui/deployment-patch.yaml.
 
@@ -769,7 +702,7 @@ Kustomize Patch
 Deployment/ui
 Diff
 
-~/environment/eks-workshop/modules/automation/gitops/argocd/update-application/deployment-patch.yaml
+./base-application/update-application/deployment-patch.yaml
 
 apiVersion: apps/v1
 kind: Deployment
@@ -780,17 +713,14 @@ spec:
 
 # Push changes to the Git repository:
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application add .
 warning: in the working copy of 'apps-kustomization/ui/deployment-patch.yaml', LF will be replaced by CRLF the next time Git touches it
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
 $ git -C ./base-application commit -am "Update UI service replicas"
 [main 3fe097e] Update UI service replicas
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-HP@DESKTOP-9MLLT14 MINGW64 ~/Downloads/Cloud/00-reskill/ArgoCD_Reskill
-$ git -C .//argocd push
+$ git -C ./base-application push
 Enumerating objects: 9, done.
 Counting objects: 100% (9/9), done.
 Delta compression using up to 4 threads
@@ -804,16 +734,13 @@ To https://github.com/ChukwuemekaAham/base-application
 # Click Refresh and Sync in ArgoCD UI, use argocd CLI to Sync the application or wait until automatic Sync will be finished:
 
 
-$
-argocd app sync ui
+$ argocd app sync ui
 
 argocd-update-application
 
 To verify, run the following commands:
 
-~
-$
-kubectl get deployment -n ui ui
+$ kubectl get deployment -n ui ui
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 ui     3/3     3            3           3m33s
 
